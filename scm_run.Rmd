@@ -1,0 +1,411 @@
+---
+title: "Simulations for simultaneous count models"
+output:
+  html_document:
+    df_print: paged
+---
+
+This document shows step-by-step how to run simulations for simultaneous count models and graph the results.
+
+## Preliminaries
+Please ensure the necessary packages are and functions are installed and loaded.
+
+### Packages
+These packages are required to simulate data, fit models, retrieve and summarise results, and create graphs.
+
+You may need to install these separately if they are not currently present. NB: [`jagstools`](https://github.com/johnbaums/jagstools) can be installed from github using `devtools::install_github(repo = "johnbaums/jagstools")`. 
+
+*JAGS version 3 or higher must also be installed on your machine.*
+```{r packages}
+library("R2jags")
+library("tibble")
+library("dplyr")
+library("magrittr")
+library("tidyr")
+library("parallel")
+library("jagstools")
+library("purrr")
+library("ggplot2")
+```
+
+
+### Functions
+The following custom functions are also necessary.
+```{r functions}
+source("functions/scm_fun_make.pi.R")
+source("functions/scm_fun_make.mod.R")
+source("functions/scm_fun_make.dat.R")
+source("functions/scm_fun_sim.dat.R")
+source("functions/scm_fun_is.jags.R")
+source("functions/scm_fun_is.jags2.R")
+source("functions/scm_fun_fit.mod.R")
+source("functions/scm_fun_mod.spec2.R")
+source("functions/scm_fun_fit.sim2.R")
+source("functions/scm_fun_spec.list2.R")
+source("functions/scm_fun_fit.pll2.R")
+source("functions/scm_fun_is.jags2.R")
+source("functions/scm_fun_get.res2.R")
+source("functions/scm_fun_sum.res2.R")
+source("functions/scm_fun_get.jr.R")
+source("functions/scm_fun_sum.cmp.R")
+source("functions/scm_fun_plot_nplot.R")
+source("functions/scm_fun_plot_pplot.R")
+source("functions/scm_fun_plot_rplot.R")
+source("functions/scm_fun_plot_cplot.R")
+```
+
+
+## Model calls
+**These calls entrain significant computational power. Please consider this information carefully before running the following chunks.**
+
+The following scripts simulate data, fit models, and summarize and save results for all combinations of specified variables:
+
+* number of sites,
+* net probability of detection,
+* population size,
+* annual population growth rate,
+* number of sampling occasions per year,
+* number of years of sampling,
+* even or uneven spread of individuals among sites,
+* truncation of prior for lambda, and
+* binomial and multinomial models.
+
+There are several custom work-horse functions called directly by these scripts, though many other custom functions are called underneath. Here I outline those called directly.
+
+Initially, `mod.spec2` creates a data frame where each row represents a single simulation, and that row contains variables including parameter specifications, nested arrarys of simulated data formatted for both the binomial and multinomial models, and links to temporary text files containg the binomial and multinomial models appropriate to those variables. The number of rows in the data frame will be the number of simulations per combination of variables multiplied by the number of combinations of variables, i.e. each row is the specification of a unique simulation.
+
+Then, given a specified number of MCMC iterations and socket clusters, `fit.pll2` will use JAGS to fit the models to the data in each row in parallel, and append the JAGS model fits to the data frame. *This may take a large amout of time, depending on the number of simulations, variable combinations, and MCMC iterations*.
+
+Once the models are fit, `get.res2` will extract the results for each simulation from the JAGS objects, and append them as variables in the data.frame, removing the JAGS objects from the output data frame.
+
+Finally, `sum.res2` will summarize the results of simulations for each variable combination.
+
+The objects created by each of `fit.pll2`, `get.res2`, and `sum.res2` are saved to a subdirectory called "output".
+
+**You may want to modify the following items to depending on the computing capacity you have available or when testing the code:**
+
+* `mod.spec2(..., nsims = 100) ` as in the below scripts specifies running 100 simulations for each combination of variables.
+* `n.clusters` is set at 20 in the below scripts, meaning the parallelisation will be run over 20 socket clusters. This is likely to be too many for a standard desktop or laptop. See also `help("makeCluster")`.
+* `jags.controls` takes as arguments, in order, number of MCMC chains, number of MCMC iterations, number of iterations to burn-in, MCMC thinning rate, and maximum number of updates until covergence. These correspond to `R2jags::jags` arguments `n.chains`, `n.iter`, `n.burnin`, and `n.thin`, and `R2jags::autojags` argument `n.update`. These are set at 3 chains, 100000 iterations, 50000 burn-in, thinning rate of 20, and up to 3 updates. Fewer iterations and burn-in will reduce running time (but also may hamper convergence).
+
+### Sites 
+100 simulations for all combinations of:
+
+* 2, 4, 8, 16, 32, or 64 sampling occasions,
+* 1, 2, 3, 5, 7, or 9 survey sites,
+* Net probability of detection of 0.1, 0.5, or 0.9,
+* Closed population size of 1000,
+* Binomial and multinomial models.
+```{r source sites_sims.R, eval=FALSE}
+source(file = "scripts/sites_sims.R")
+```
+
+### Population growth rate 
+100 simulations for all combinations of:
+
+* 2, 4, 8, 16, 32, or 64 sampling occasions per year,
+* 1, 3, or 7 survey sites,
+* Net probability of detection of 0.1, 0.5, or 0.9,
+* Initial population size of 1000,
+* 2, 4, or 8 years of sampling,
+* Population annual growth rate of 0.90, 0.98, 1.00, 1.02, or 1.10,
+* Binomial and multinomial models.
+```{r source trend_sims.R, eval=FALSE}
+source(file = "scripts/trend_sims.R")
+```
+
+### Population size
+100 simulations for all combinations of:
+
+* 2, 4, 8, 16, 32, or 64 sampling occasions,
+* 1, 3, or 7 survey sites,
+* Net probability of detection of 0.1, 0.5, or 0.9,
+* Closed population size of 10, 100, 1000, or 10000,
+* Binomial and multinomial models.
+```{r source pop_sims.R, eval=FALSE}
+source(file = "scripts/pop_sims.R")
+```
+
+### Uneven
+100 simulations for all combinations of:
+
+* 2, 4, 8, 16, 32, or 64 sampling occasions,
+* 3 or 7 survey sites,
+* Net probability of detection of 0.1, 0.5, or 0.9,
+* Population spread unevenly among sites,
+* Closed population size of 1000, and
+* Binomial and multinomial models.
+```{r source uneven_sims.R, eval=FALSE}
+source(file = "scripts/uneven_sims.R")
+```
+
+## Results
+
+### Prepare data
+
+#### Read in results summaries
+```{r read in results}
+sites.sum  <- readRDS(file = "output/site.sum.Rds")
+trend.sum  <- readRDS(file = "output/trend.sum.Rds")
+pop.sum    <- readRDS(file = "output/pop.sum.Rds")
+uneven.sum <- readRDS(file = "output/uneven.sum.Rds")
+```
+
+#### Group outputs into analyses sets
+```{r group analyses binomial}
+bin.sum <- sites.sum %>%
+  filter(nsites == 1)
+```
+
+```{r group analyses population spread}
+spread.sum <- sites.sum %>%
+  bind_rows(uneven.sum) %>%
+  filter(nsites == 3 | nsites == 7)
+```
+
+#### Plotting controls
+```{r plot controls}
+res <- 600
+width <- 3236
+height <- 2000
+bg = "white"
+```
+
+
+
+### Binomial models
+#### Estimates of abundance
+```{r fig. 2a}
+fig.2a <- nplot(bin.sum, bin = "bin")
+
+fig.2a
+```
+
+```{r save fig.2a}
+png(filename = "plots/fig.2a.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.2a
+
+dev.off()
+```
+
+#### Estimates of net probability of detection
+```{r fig. 2b}
+fig.2b <- pplot(bin.sum, bin = "bin")
+
+fig.2b
+```
+
+```{r save fig.2b}
+png(filename = "plots/fig.2b.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.2b
+
+dev.off()
+```
+
+#### Percentage of credible intervals containig true value of abundance
+```{r fig. 2c}
+fig.2c <- cplot(bin.sum, bin = "bin")  + facet_grid(. ~ model)
+
+fig.2c
+```
+
+```{r save fig.2c}
+png(filename = "plots/fig.2c.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.2c
+
+dev.off()
+```
+
+### Number of sites
+
+#### Estimates of abundance
+```{r fig. 3a}
+fig.3a <- nplot(sites.sum) + facet_grid(. ~ model)
+
+fig.3a
+```
+
+```{r save fig.3a}
+png(filename = "plots/fig.3a.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.3a
+
+dev.off()
+```
+
+#### Estimates of net probability of detection
+```{r fig. 3b}
+fig.3b <- pplot(sites.sum)
+
+fig.3b
+```
+
+```{r save fig.3b}
+png(filename = "plots/fig.3b.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.3b
+
+dev.off()
+```
+
+#### Percentage of credible intervals containig true value of abundance
+```{r fig. 3c}
+fig.3c <- cplot(sites.sum) + facet_grid(. ~ model)
+
+fig.3c
+```
+
+```{r save fig.3c}
+png(filename = "plots/fig.3c.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.3c
+
+dev.off()
+```
+
+### Population growth rate
+
+#### Estimates of growth rate
+```{r fig. 4a}
+fig.4a <- rplot(trend.sum)
+
+fig.4a
+```
+
+```{r save fig.4a}
+png(filename = "plots/fig.4a.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.4a
+
+dev.off()
+```
+
+#### Percentage of credible intervals containig true value of growth rate
+```{r fig. 4b}
+fig.4b <- cplot(trend.sum, rr = "r") + facet_grid(model + nyears ~ r)
+
+fig.4b
+```
+
+```{r save fig.4b}
+png(filename = "plots/fig.4b.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.4b
+
+dev.off()
+```
+
+### Population size
+
+#### Estimates of abundance
+```{r fig. 5a}
+fig.5a <- nplot(pop.sum) + facet_grid(N ~ model, scales = "free")
+
+fig.5a
+```
+
+```{r save fig.5a}
+png(filename = "plots/fig.5a.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.5a
+
+dev.off()
+```
+
+#### Percentage of credible intervals containig true value of abundance
+```{r fig. 5b}
+fig.5b <- cplot(pop.sum) + facet_grid(N ~ model)
+
+fig.5b
+```
+
+```{r save fig.5b}
+png(filename = "plots/fig.5b.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.5b
+
+dev.off()
+```
+
+### Population spread
+
+#### Estimates of abundance
+```{r fig. 6a}
+fig.6a <- nplot(spread.sum) + facet_grid(pi.split ~ model)
+
+fig.6a
+```
+
+```{r save fig.6a}
+png(filename = "plots/fig.6a.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.6a
+
+dev.off()
+```
+
+#### Percentage of credible intervals containig true value of abundance
+```{r fig. 6b}
+fig.6b <- cplot(spread.sum) + facet_grid(pi.split ~ model)
+
+fig.6b
+```
+
+```{r save fig.6b}
+png(filename = "plots/fig.6b.png",
+    res = res,
+    height = height,
+    width = width,
+    bg = bg)
+
+fig.6b
+
+dev.off()
+```
