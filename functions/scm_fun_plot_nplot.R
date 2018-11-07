@@ -8,7 +8,8 @@ nplot <- function(dat,
                   the.theme = NA,
                   the.lts = NA,
                   rib = NA,
-                  bin = NA){
+                  bin = NA,
+                  bin.lt = NA){
   
   library("dplyr")
   library("ggplot2")
@@ -104,8 +105,11 @@ nplot <- function(dat,
         geom_ribbon(aes(ymin = N.2.5.mean,
                         ymax = N.97.5.mean,
                         linetype = nsites,
-                        colour = p.prime),
-                    alpha = 0.05)
+                        colour = p.prime,
+                        fill = p.prime
+                        ),
+                    alpha = 0.1) +
+        scale_fill_continuous(values = the.cols)
       
     }
   }
@@ -119,12 +123,21 @@ nplot <- function(dat,
       scale_linetype_manual(values = the.lts,
                             guide = guide_legend(title = "Number\nof sites"))
   } else if(bin == "bin"){
-    the.plot <- the.plot +
-      geom_line(aes(colour = p.prime,
-                    linetype = model),
-                size = lski) +
-      scale_linetype_manual(values = the.lts,
-                            guide = guide_legend(title = "Model"))
+    
+    if(is.na(bin.lt)){
+      
+      the.plot <- the.plot +
+        geom_line(aes(colour = p.prime,
+                      linetype = model),
+        size = lski) +
+        scale_linetype_manual(values = the.lts,
+                              guide = guide_legend(title = "Model"))
+    } else if (bin.lt == "none"){
+      the.plot <- the.plot +
+        geom_line(aes(colour = p.prime),
+        size = lski)
+    }
+    
   }
   
   the.plot <- the.plot +
@@ -133,7 +146,7 @@ nplot <- function(dat,
     scale_colour_manual(values = the.cols,
                         guide = guide_legend(title = expression(italic("p'")))) +
     labs(x="Sampling occasions",
-         y = "Mean estimated abundance") +
+         y = "Abundance") +
     the.theme
   
   

@@ -29,8 +29,8 @@ pplot <- function(dat,
   
   pski <- ifelse(is.na(pski), 2, pski)
   pfat <- ifelse(is.na(pfat), 5, pfat)
-  lski <- ifelse(is.na(lski), 0.6, lski)
-  lfat <- ifelse(is.na(lfat), 0.6, lfat)
+  lski <- ifelse(is.na(lski), 1, lski)
+  lfat <- ifelse(is.na(lfat), 1, lfat)
   
   if(is.na(the.cols)){
     if(np == 1){
@@ -119,34 +119,43 @@ pplot <- function(dat,
       scale_x_continuous(trans = "log2", breaks = c(2, 4, 8, 16, 32, 64)) +
       scale_colour_manual(values = the.cols,
                           guide = guide_legend(title = expression(italic("p'")))) +
-      labs(x="Sampling occasions",
-           y = expression(paste("Mean estimated net\nprobability of detection, ",
-                                italic(" p'")))) +
+      labs(x = "Sampling occasions",
+           y = expression(paste("Net probability\nof detection,",
+                               italic("p'")))) +
       the.theme +
       theme(plot.margin = unit(c(6, 6, 6, 19), "points"))
   
-  
+      ppl <- c(
+        `0.1` = "p' = 0.1",
+        `0.5` = "p' = 0.5",
+        `0.9` = "p' = 0.9"
+      )
   
   if(mod == "both"){
     if(ny == 1){
       if(is.na(bin)) {
         the.plot <- the.plot +
-          facet_grid(model ~ p.prime)
+          facet_grid(model ~ p.prime,
+                     labeller = labeller(p.prime = ppl))
       } else if(bin == "bin"){
         the.plot <- the.plot +
-          facet_grid(. ~ p.prime)
+          facet_grid(. ~ p.prime,
+                     labeller = labeller(p.prime = ppl))
       }
     } else if(ny > 1){
       the.plot <- the.plot +
-        facet_grid(model + nyears ~ p.prime)
+        facet_grid(model + nyears ~ p.prime,
+                   labeller = labeller(p.prime = ppl))
     }
   } else {
     if(ny == 1){
       the.plot <- the.plot +
-        facet_grid(. ~ p.prime)
+        facet_grid(. ~ p.prime,
+                   labeller = labeller(p.prime = ppl))
     } else if(ny > 1){
       the.plot <- the.plot +
-        facet_grid(nyears ~ p.prime)
+        facet_grid(nyears ~ p.prime,
+                   labeller = labeller(p.prime = ppl))
     }
   }
   

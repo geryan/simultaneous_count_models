@@ -26,6 +26,7 @@ library("parallel")
 library("jagstools")
 library("purrr")
 library("ggplot2")
+library("cowplot")
 ```
 
 
@@ -37,8 +38,8 @@ source("functions/scm_fun_make.mod.R")
 source("functions/scm_fun_make.dat.R")
 source("functions/scm_fun_sim.dat.R")
 source("functions/scm_fun_is.jags.R")
-source("functions/scm_fun_is.jags2.R")
 source("functions/scm_fun_fit.mod.R")
+source("functions/scm_fun_not.fit.R")
 source("functions/scm_fun_mod.spec2.R")
 source("functions/scm_fun_fit.sim2.R")
 source("functions/scm_fun_spec.list2.R")
@@ -163,74 +164,149 @@ spread.sum <- sites.sum %>%
   filter(nsites == 3 | nsites == 7)
 ```
 
-#### Plotting controls
+### Plotting controls
 ```{r plot controls}
 res <- 600
-width <- 3236
-height <- 2000
+width.png.1 <- 3200
+height.png.1 <- 2000
+height.png.3 <- 6400
 bg = "white"
+
+width.pdf.1 <- 5
+height.pdf.1 <- 3.125
+height.pdf.3 <- 10
 ```
-
-
 
 ### Binomial models
 #### Estimates of abundance
-```{r fig. 2a}
-fig.2a <- nplot(bin.sum, bin = "bin")
+```{r fig.2a}
+fig.2a <- nplot(bin.sum,
+                bin = "bin",
+                bin.lt = "none") +
+  facet_grid(. ~ model)
 
 fig.2a
 ```
-
-```{r save fig.2a}
-png(filename = "plots/fig.2a.png",
-    res = res,
-    height = height,
-    width = width,
-    bg = bg)
-
-fig.2a
-
-dev.off()
-```
-
 #### Estimates of net probability of detection
-```{r fig. 2b}
-fig.2b <- pplot(bin.sum, bin = "bin")
-
+```{r fig.2b}
+fig.2b <- pplot(bin.sum,
+                bin = "bin")
 fig.2b
 ```
-
-```{r save fig.2b}
-png(filename = "plots/fig.2b.png",
-    res = res,
-    height = height,
-    width = width,
-    bg = bg)
-
-fig.2b
-
-dev.off()
-```
-
 #### Percentage of credible intervals containig true value of abundance
-```{r fig. 2c}
-fig.2c <- cplot(bin.sum, bin = "bin")  + facet_grid(. ~ model)
+```{r fig.2c}
+fig.2c <- cplot(bin.sum,
+                bin = "bin",
+                bin.pt = "none") +
+  facet_grid(. ~ model)
 
 fig.2c
 ```
 
-```{r save fig.2c}
-png(filename = "plots/fig.2c.png",
+#### Composite figure of binomial models
+```{r fig.2}
+fig.2 <- plot_grid(fig.2a + theme(legend.position="none") + xlab(""),
+                   fig.2b + theme(legend.position="none") + xlab(""),
+                   fig.2c + theme(legend.position="none"),
+                   ncol = 1,
+                   rel_heights = c(1, 1, 1, 0.2),
+                   align = "v",
+                   axis = "l",
+                   get_legend(fig.2b + theme(legend.position = "bottom", legend.key.size = unit(0.15, "in"))),
+                   labels = c("a", "b", "c")
+                   )
+
+fig.2
+```
+
+#### Save plots fig.2
+```{r save fig.2 pdf}
+pdf(file = "plots/fig.2.pdf",
+    width = width.pdf.1,
+    height = height.pdf.3)
+
+fig.2
+
+dev.off()
+```
+```{r save fig.2 png}
+png(file = "plots/fig.2.png",
+    width = width.png.1,
+    height = height.png.3,
     res = res,
-    height = height,
-    width = width,
     bg = bg)
+
+fig.2
+
+dev.off()
+```
+
+```{r save fig.2a pdf}
+pdf(file = "plots/fig.2a.pdf",
+    width = width.pdf.1,
+    height = height.pdf.1)
+
+fig.2a
+
+dev.off()
+```
+
+```{r save fig.2a png}
+png(file = "plots/fig.2a.png",
+    width = width.png.1,
+    height = height.png.1,
+    res = res,
+    bg = bg)
+
+fig.2a
+
+dev.off()
+```
+
+```{r save fig.2b pdf}
+pdf(file = "plots/fig.2b.pdf",
+    width = width.pdf.1,
+    height = height.pdf.1)
+
+fig.2b
+
+dev.off()
+```
+
+```{r save fig.2b png}
+png(file = "plots/fig.2b.png",
+    width = width.png.1,
+    height = height.png.1,
+    res = res,
+    bg = bg)
+
+fig.2b
+
+dev.off()
+```
+
+
+```{r save fig.2c pdf}
+pdf(file = "plots/fig.2c.pdf",
+    width = width.pdf.1,
+    height = height.pdf.1)
 
 fig.2c
 
 dev.off()
 ```
 
+```{r save fig.2c png}
+png(file = "plots/fig.2c.png",
+    width = width.png.1,
+    height = height.png.1,
+    res = res,
+    bg = bg)
+
+fig.2c
+
+dev.off()
+```
 ### Number of sites
 
 #### Estimates of abundance
@@ -240,17 +316,7 @@ fig.3a <- nplot(sites.sum) + facet_grid(. ~ model)
 fig.3a
 ```
 
-```{r save fig.3a}
-png(filename = "plots/fig.3a.png",
-    res = res,
-    height = height,
-    width = width,
-    bg = bg)
 
-fig.3a
-
-dev.off()
-```
 
 #### Estimates of net probability of detection
 ```{r fig. 3b}
@@ -259,17 +325,6 @@ fig.3b <- pplot(sites.sum)
 fig.3b
 ```
 
-```{r save fig.3b}
-png(filename = "plots/fig.3b.png",
-    res = res,
-    height = height,
-    width = width,
-    bg = bg)
-
-fig.3b
-
-dev.off()
-```
 
 #### Percentage of credible intervals containig true value of abundance
 ```{r fig. 3c}
@@ -277,12 +332,107 @@ fig.3c <- cplot(sites.sum) + facet_grid(. ~ model)
 
 fig.3c
 ```
+#### Composite figure of binomial models
+```{r fig.3}
+fig.3 <- plot_grid(fig.3a + theme(legend.position="none") + xlab(""),
+                   fig.3b + theme(legend.position="none") + xlab(""),
+                   get_legend(fig.3b + theme(legend.position = "bottom", legend.key.size = unit(0.15, "in"))),
+                   fig.3c + theme(legend.position="none"),
+                   ncol = 1,
+                   rel_heights = c(1, 1, 0.15, 1, 0.15),
+                   align = "v",
+                   axis = "l",
+                   get_legend(fig.3c + theme(legend.position = "bottom", legend.key.size = unit(0.15, "in"))),
+                   #get_legend(fig.3b + theme(legend.position = "bottom")),
+                   #get_legend(fig.3c + theme(legend.position = "bottom")),
+                   labels = c("a", "b", "", "c")
+                   )
 
-```{r save fig.3c}
-png(filename = "plots/fig.3c.png",
+fig.3
+```
+
+#### Save plots fig.3
+```{r save fig.3 pdf}
+pdf(file = "plots/fig.3.pdf",
+    width = width.pdf.1,
+    height = height.pdf.3)
+
+fig.3
+
+dev.off()
+```
+```{r save fig.3 png}
+png(file = "plots/fig.3.png",
+    width = width.png.1,
+    height = height.png.3,
     res = res,
-    height = height,
-    width = width,
+    bg = bg)
+
+fig.3
+
+dev.off()
+```
+
+```{r save fig.3a pdf}
+pdf(file = "plots/fig.3a.pdf",
+    width = width.pdf.1,
+    height = height.pdf.1)
+
+fig.3a
+
+dev.off()
+```
+
+```{r save fig.3a png}
+png(file = "plots/fig.3a.png",
+    width = width.png.1,
+    height = height.png.1,
+    res = res,
+    bg = bg)
+
+fig.3a
+
+dev.off()
+```
+
+```{r save fig.3b pdf}
+pdf(file = "plots/fig.3b.pdf",
+    width = width.pdf.1,
+    height = height.pdf.1)
+
+fig.3b
+
+dev.off()
+```
+
+```{r save fig.3b png}
+png(file = "plots/fig.3b.png",
+    width = width.png.1,
+    height = height.png.1,
+    res = res,
+    bg = bg)
+
+fig.3b
+
+dev.off()
+```
+
+
+```{r save fig.3c pdf}
+pdf(file = "plots/fig.3c.pdf",
+    width = width.pdf.1,
+    height = height.pdf.1)
+
+fig.3c
+
+dev.off()
+```
+
+```{r save fig.3c png}
+png(file = "plots/fig.3c.png",
+    width = width.png.1,
+    height = height.png.1,
+    res = res,
     bg = bg)
 
 fig.3c
@@ -293,39 +443,39 @@ dev.off()
 ### Population growth rate
 
 #### Estimates of growth rate
-```{r fig. 4a}
-fig.4a <- rplot(trend.sum)
+```{r fig.S1a}
+fig.S1a <- rplot(trend.sum)
 
-fig.4a
+fig.S1a
 ```
 
-```{r save fig.4a}
-png(filename = "plots/fig.4a.png",
+```{r save fig.S1a}
+png(filename = "plots/fig.S1a.png",
     res = res,
-    height = height,
-    width = width,
+    height = height.png,
+    width = width.png,
     bg = bg)
 
-fig.4a
+fig.S1a
 
 dev.off()
 ```
 
 #### Percentage of credible intervals containig true value of growth rate
-```{r fig. 4b}
-fig.4b <- cplot(trend.sum, rr = "r") + facet_grid(model + nyears ~ r)
+```{r fig.S1b}
+fig.S1b <- cplot(trend.sum, rr = "r")
 
-fig.4b
+fig.S1b
 ```
 
-```{r save fig.4b}
-png(filename = "plots/fig.4b.png",
+```{r save fig.S1b}
+png(filename = "plots/fig.S1b.png",
     res = res,
-    height = height,
-    width = width,
+    height = height.png,
+    width = width.png,
     bg = bg)
 
-fig.4b
+fig.S1b
 
 dev.off()
 ```
@@ -333,39 +483,39 @@ dev.off()
 ### Population size
 
 #### Estimates of abundance
-```{r fig. 5a}
-fig.5a <- nplot(pop.sum) + facet_grid(N ~ model, scales = "free")
+```{r fig.S2a}
+fig.S2a <- nplot(pop.sum) + facet_grid(N ~ model, scales = "free")
 
-fig.5a
+fig.S2a
 ```
 
-```{r save fig.5a}
-png(filename = "plots/fig.5a.png",
+```{r save fig.S2a}
+png(filename = "plots/fig.S2a.png",
     res = res,
-    height = height,
-    width = width,
+    height = height.png,
+    width = width.png,
     bg = bg)
 
-fig.5a
+fig.S2a
 
 dev.off()
 ```
 
 #### Percentage of credible intervals containig true value of abundance
-```{r fig. 5b}
-fig.5b <- cplot(pop.sum) + facet_grid(N ~ model)
+```{r fig.S2b}
+fig.S2b <- cplot(pop.sum) + facet_grid(N ~ model)
 
-fig.5b
+fig.S2b
 ```
 
-```{r save fig.5b}
-png(filename = "plots/fig.5b.png",
+```{r save fig.S2b}
+png(filename = "plots/fig.S2b.png",
     res = res,
-    height = height,
-    width = width,
+    height = height.png,
+    width = width.png,
     bg = bg)
 
-fig.5b
+fig.S2b
 
 dev.off()
 ```
@@ -373,39 +523,39 @@ dev.off()
 ### Population spread
 
 #### Estimates of abundance
-```{r fig. 6a}
-fig.6a <- nplot(spread.sum) + facet_grid(pi.split ~ model)
+```{r fig.S3a}
+fig.S3a <- nplot(spread.sum) + facet_grid(pi.split ~ model)
 
-fig.6a
+fig.S3a
 ```
 
-```{r save fig.6a}
-png(filename = "plots/fig.6a.png",
+```{r save fig.S3a}
+png(filename = "plots/fig.S3a.png",
     res = res,
-    height = height,
-    width = width,
+    height = height.png,
+    width = width.png,
     bg = bg)
 
-fig.6a
+fig.S3a
 
 dev.off()
 ```
 
 #### Percentage of credible intervals containig true value of abundance
-```{r fig. 6b}
-fig.6b <- cplot(spread.sum) + facet_grid(pi.split ~ model)
+```{r fig.S3b}
+fig.S3b <- cplot(spread.sum) + facet_grid(pi.split ~ model)
 
-fig.6b
+fig.S3b
 ```
 
-```{r save fig.6b}
-png(filename = "plots/fig.6b.png",
+```{r save fig.S3b}
+png(filename = "plots/fig.S3b.png",
     res = res,
-    height = height,
-    width = width,
+    height = height.png,
+    width = width.png,
     bg = bg)
 
-fig.6b
+fig.S3b
 
 dev.off()
 ```

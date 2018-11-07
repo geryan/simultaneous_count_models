@@ -87,15 +87,19 @@ rplot <- function(dat,
     scale_colour_manual(values = the.cols,
                         guide = guide_legend(title = expression(italic("p'")))) +
     scale_linetype_manual(values = the.lts,
-                          guide = guide_legend(title = "Number of sites")) +
+                          guide = guide_legend(title = "Number\nof sites")) +
     labs(x="Sampling occasions",
-         y = "Mean estimated abundance") +
+         y = "Abundance") +
     the.theme
   
+  ml <- c(
+    Binomial = "Bin",
+    Multinomial = "Multi"
+  )
   
   if(mod == "both"){
       the.plot <- the.plot +
-        facet_grid(model + nyears ~ r)
+        facet_grid(model + nyears ~ r, labeller = labeller(model = ml))
   } else {
     the.plot <- the.plot +
         facet_grid(nyears ~ r)

@@ -8,7 +8,8 @@ cplot <- function(dat,
                   the.theme = NA,
                   the.lts = NA,
                   bin = NA,
-                  rr = NA){
+                  rr = NA,
+                  bin.pt = NA){
   
   library("dplyr")
   library("ggplot2")
@@ -84,28 +85,39 @@ cplot <- function(dat,
         geom_point(aes(colour = p.prime,
                        shape = nsites),
                    size = pski) +
-        scale_shape(guide = guide_legend(title = "Number of sites")) +
+        scale_shape(guide = guide_legend(title = "Number\nof sites")) +
         labs(x="Sampling occasions",
-             y = "Percentage of credible intervals\ncontaining true abundance")
+             y = "CIs containing\ntrue abundance (%)")
     } else if (rr == "r"){
       the.plot <- the.plot +
         geom_point(aes(colour = p.prime,
                        shape = nsites,
                        y = r.pc.in.ci),
                    size = pski) +
-        scale_shape(guide = guide_legend(title = "Number of sites")) +
+        scale_shape(guide = guide_legend(title = "Number\nof sites")) +
         labs(x="Sampling occasions",
-             y = "Percentage of credible intervals\ncontaining true growth rate")
+             y = "CIs containing\ntrue growth rate (%)")
     }
     
   } else if(bin == "bin"){
-    the.plot <- the.plot +
-      geom_point(aes(colour = p.prime,
-                    shape = model),
-                size = pski) +
-      scale_shape(guide = guide_legend(title = "Model")) +
-      labs(x="Sampling occasions",
-           y = "Percentage of credible intervals\ncontaining true abundance")
+    
+    if (is.na(bin.pt)){
+      the.plot <- the.plot +
+        geom_point(aes(colour = p.prime,
+                       shape = model),
+                   size = pski) +
+        scale_shape(guide = guide_legend(title = "Model")) +
+        labs(x="Sampling occasions",
+             y = "CIs containing\ntrue abundance (%)")
+    } else if (bin.pt == "none"){
+      the.plot <- the.plot +
+        geom_point(aes(colour = p.prime),
+                   size = pski) +
+        labs(x="Sampling occasions",
+             y = "CIs containing\ntrue abundance (%)")
+    }
+    
+    
   }
   
   the.plot <- the.plot +
@@ -116,6 +128,10 @@ cplot <- function(dat,
                         guide = guide_legend(title = expression(italic("p'")))) +
     the.theme
   
+  ml <- c(
+    Binomial = "Bin",
+    Multinomial = "Multi"
+  )
   
   
   if(mod == "both"){
@@ -128,8 +144,13 @@ cplot <- function(dat,
           facet_grid(. ~ p.prime)
       }
     } else if(ny > 1){
-      the.plot <- the.plot +
-        facet_grid(model + nyears ~ p.prime)
+      if(rr == "r"){
+        the.plot <- the.plot +
+          facet_grid(model + nyears ~ r, labeller = labeller(model = ml))
+      } else {
+        the.plot <- the.plot +
+          facet_grid(model + nyears ~ p.prime, labeller = labeller(model = ml))
+      }
     }
   } else {
     if(ny == 1){
