@@ -6,4 +6,4 @@ To repeat the simulations in the paper see  [`scm_run.Rmd`](https://github.com/g
 
 [![DOI](https://zenodo.org/badge/143001426.svg)](https://zenodo.org/badge/latestdoi/143001426)
 
-For an introduction to setting up and running a simultaneous count model, [a short vignette is available at this repository](https://github.com/geryan/SimultaneousCountModel_vignette).
+**For an introduction to setting up and running a simultaneous count model**, [a short vignette is available at this repository](https://github.com/geryan/SimultaneousCountModel_vignette).
